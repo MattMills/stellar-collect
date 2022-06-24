@@ -1,36 +1,45 @@
 <?php
-	$this_page = 'saves';
+	$this_page = 'collect';
 	require_once('../stellar-web/header.php');
 ?>
+<style>
+.hidden {
+	visibility: hidden;
+}
+
+</style>
+
 	<div id="container" class="container-fluid" style="width:80%">
 		<div class="row">
 			<h2>(EARLY DEVELOPMENT)</h2>
 		</div>
-		<div class="row">&nbsp;</div>
+		<div class="row">StellarStellaris Mod & Crash collector: This web app will look at your My Documents \ Paradox Interactive \ Stellaris folder, and collect info on all your current mods, crashes and saved games.</div>
 		<div class="row">&nbsp;</div>
 		<div class="row" id="checklist">
 			<div class="col-9 align-self-center" id="select-folder">
 				<div class="row">
 				<div class="col-2">Step 1.</div>
 				<div class="col-6"><button id="file-input-button" class="btn btn-primary">Browse to My Documents \ Paradox Interactive \ Stellaris folder</button></div>
-				<div class="col-1" id="status">?</div>
+				<div class="col-1" id="status"></div>
 				</div>
 			</div>
 			<div class="col-9 align-self-center" id="discover-meta">
                                 <div class="row">
 	                                <div class="col-2">Step 2.</div>
 	                                <div class="col-6">Discover game metadata</div>
-	                                <div class="col-1" id="status">?</div>
+	                                <div class="col-1" id="status"></div>
                                 </div>
                         </div>
 			<div class="col-9 align-self-center" id="discover-mods">
 				<div class="row">
 					<div class="col-2">Step 3.</div>
 					<div class="col-6">Discover enabled mods</div>
-					<div class="col-3" id="status">?</div>
+					<div class="col-3" id="status"></div>
 				</div>
+				<div class="row alert-warning p-3"><p>Known issue: files with tildes (~) cannot be loaded due to <a href="https://bugs.chromium.org/p/chromium/issues/detail?id=1336156">Chrome bug/limitation</a></p></div>
 				<div class="row">
-				<table class="table">
+				<table class="table hidden">
+				<thead><tr><th>Order</th><th>Mod Name</th><th>Supported Version</th><th>Steam ID</th><th>Valid</th></tr>
 				<tbody></tbody>
 				</table>
 				</div>
@@ -39,10 +48,11 @@
                                 <div class="row">
                                         <div class="col-2">Step 4.</div>
                                         <div class="col-6">Discover crashes</div>
-                                        <div class="col-3" id="status">?</div>
+                                        <div class="col-3" id="status"></div>
                                 </div>
                                 <div class="row">
-                                <table class="table">
+				<table class="table hidden">
+				<thead><tr><th>Folder</th><th>Last Modified Date</th><th>Valid</th></tr></thead>
                                 <tbody></tbody>
                                 </table>
                                 </div>
@@ -51,10 +61,11 @@
                                 <div class="row">
                                         <div class="col-2">Step 5.</div>
                                         <div class="col-6">Discover save games</div>
-                                        <div class="col-3" id="status">?</div>
+                                        <div class="col-3" id="status"></div>
                                 </div>
                                 <div class="row">
-                                <table class="table">
+				<table class="table hidden">
+				<thead><tr><th>File</th><th>Last Modified</th><th>Name</th><th>In game Date</th><th>Fleets</th><th>Planets</th><th>Ironman</th><th>Valid</th></tr></thead>
                                 <tbody></tbody>
                                 </table>
                                 </div>
@@ -64,8 +75,7 @@
 
 	</div>
 	<script>
-	var current_version = '3.4.*';
-	//TODO: Make GLOB work
+	var current_version = '3.4.4';
 
 	let stellaris_dir;
 	let stellaris_crash_dir;
@@ -111,11 +121,11 @@
 			if(dlc_load != undefined && mods_registry != undefined){
 				$('#checklist > #discover-meta > div > #status').html('<i class="bi bi-check-lg" style="color:green;"></i>');
 			}
-
+			$('#file-input-button').addClass('disabled').removeClass('btn-primary').addClass('btn-secondary');
 			discover_mods();
 			discover_crashes();
 			discover_save_games();
-
+			
 		} catch(e) {
 			console.log(e);
 		}
@@ -150,16 +160,33 @@
 					mod = mod_list[mod_count]['arr'];
 
 					success_count++;
-					$('#checklist > #discover-mods > div > table > tbody').append($(`<tr id='${mod_count}'><td>${mod['name']}</td><td id='ver'>${mod['supported_version']}</td><td id='remote'>${mod['remote_file_id']}</td><td><i class="bi bi-check-square-fill" style="color:green;"></i></td></tr>`));
-					let this_row = $(`#checklist > #discover-mods > div > table > tbody > #${mod_count}`);
+					pattern = mod['supported_version'];
+					pattern.replaceAll('*', '[^\.]+');
+					const pattern_re = new RegExp(pattern);
+
+
+					let this_row = $(
+						`<tr id='${mod_count}'>
+						<td>${mod_count}</td>
+						<td>${mod['name']}</td>
+						<td id='ver'>${mod['supported_version']}</td>
+						<td id='remote'><a href="https://steamcommunity.com/sharedfiles/filedetails/?id=${mod['remote_file_id']}" target="about:blank"><i class="bi bi-steam"></i></a></td>
+						<td><i class="bi bi-check-square-fill" style="color:green;"></i></td>
+						</tr>`
+					);
+
 					let ver = this_row.children('#ver');
-					if(ver.html() != current_version){
+
+					if(!(pattern_re.test(current_version))){
 						ver.addClass('table-warning');
 					}
 
+					$('#checklist > #discover-mods > div > table > tbody').append(this_row);
+
 				}catch(e){
 					console.log(`dbg: parse ${mod_filename}`);
-					$('#checklist > #discover-mods > div > table > tbody').append($(`<tr><td>${mod_filename}</td><td></td><td></td><td><i class="bi bi-x-square-fill" style="color:red;"></i></td></tr>`));
+					$('#checklist > #discover-mods > div > table > tbody').append($(`<tr id='${mod_count}'>
+						<td>${mod_count}</td><td>${mod_filename}</td><td colspan=2></td><td><i class="bi bi-x-square-fill" style="color:red;"></i></td></tr>`));
 					
 					console.log(e);
 				}
@@ -169,11 +196,14 @@
 		}
 		if(success_count == mod_count){
 			$('#checklist > #discover-mods > div > #status').html(`<i class="bi bi-check-lg" style="color:green;"></i>(${mod_count})`);
+			$('#checklist > #discover-mods > div > table').removeClass('hidden');
 		}else if(success_count == 0){
 			$('#checklist > #discover-mods > div > #status').html('<i class="bi bi-x-lg" style="color:red;"></i>');
 		}else{
 			$('#checklist > #discover-mods > div > #status').html(`<i class="bi bi-check-lg" style="color:green;"></i>${success_count} <i class="bi bi-x-lg" style="color:red;"></i> ${(mod_count-success_count)}`);
+			$('#checklist > #discover-mods > div > table').removeClass('hidden');
 		}
+		//$('#checklist > #discover-mods > div > table').DataTable();
 	}
 
 	function parse_mod_file(mod_file_text){
@@ -201,6 +231,7 @@
 		}
 
 		let crash_count = 0;
+		let crash_success = 0;
 		for await(const entry of stellaris_crash_dir){
 			if(entry[1].kind == 'directory'){
 				try{
@@ -218,18 +249,38 @@
 					meta_text = await meta_file.text();
 					error_log_text = await error_log_file.text();
 					$('#checklist > #discover-crashes > div > table > tbody').append(
-  	                                      $(`<tr><td>${entry[1].name}</td><td>${exception_file.lastModifiedDate}</td><td><i class="bi bi-check-square-fill" style="color:green;"></i></td></tr>`)
-	                                );
+  	                                      $(`<tr><td>${entry[1].name}</td><td>${exception_file.lastModifiedDate}</td><td class="text-end"><i class="bi bi-check-square-fill" style="color:green;"></i></td></tr>`)
+					);
+					crash_success++;
 				} catch(e){
 					console.log(`Exception while processing crash (${entry[1].name}): ${e}`);
 					$('#checklist > #discover-crashes > div > table > tbody').append(
-						$(`<tr><td>${entry[1].name}</td><td></td><td><i class="bi bi-x-square-fill" style="color:red;"></i></td></tr>`)
+						$(`<tr><td>${entry[1].name}</td><td></td><td class="text-end"><i class="bi bi-x-square-fill" style="color:red;"></i></td></tr>`)
 					);
 				}
 
 				crash_count++;
 			}
 		}
+		if(crash_count == 0){
+			$('#checklist > #discover-saves > div > #status').html('<i class="bi bi-x-lg" style="color:red;"></i> (No crashes found)');
+		}else if (crash_count == crash_success){
+			$('#checklist > #discover-saves > div > #status').html(`<i class="bi bi-check-lg" style="color:green;"></i> (${crash_count})`);
+		}else{
+			$('#checklist > #discover-saves > div > #status').html(`<i class="bi bi-check-lg" style="color:green;"></i> (${crash_success}) <i class="bi bi-x-lg" style="color:red;"></i> (${crash_count-crash_success})`);
+		}
+
+		$('#checklist > #discover-crashes > div > table').removeClass('hidden');
+		$('#checklist > #discover-crashes > div > table').DataTable({
+		dom: 'rtip',
+		columns: [
+		{data: 'name'},
+		{data: 'last_modified_date', render: DataTable.render.datetime()},
+		{data: 'validation'},
+		],
+		order: [[1, 'desc']],
+		searching: false,
+		});
 	}
 
 	let save_games = {};
@@ -239,13 +290,96 @@
 			$('#checklist > #discover-saves > div > #status').html('<i class="bi bi-x-lg" style="color:red;"></i>');
 			return;
 		}
-		for await(const entry of stellaris_save_dir){
+		let save_count = 0;
+		let save_success = 0;
 
-                        $('#checklist > #discover-saves > div > table > tbody').append($(`<tr><td>${entry[1].name} - ${entry[1].kind}</td></tr>`));
-                }
+		result = await discover_save_game_dir(stellaris_save_dir, save_count, save_success);
+		save_count = result[0];
+		save_success = result[1];
+
+		if(save_count == 0){
+			$('#checklist > #discover-saves > div > #status').html('<i class="bi bi-x-lg" style="color:red;"></i>');
+		}else if(save_success == save_count){
+			$('#checklist > #discover-saves > div > #status').html(`<i class="bi bi-check-lg" style="color:green;"></i> ${save_success}`);
+		}else{
+			$('#checklist > #discover-saves > div > #status').html(`<i class="bi bi-check-lg" style="color:green;"></i> ${save_success} <i class="bi bi-x-lg" style="color:red;"></i> ${save_count-save_success}`);
+		}
+		$('#checklist > #discover-saves > div > table').removeClass('hidden');
+		$('#checklist > #discover-saves > div > table').DataTable({
+		dom: 'frtip',
+		columns: [
+			{data: 'file_name'},
+			{data: 'last_modified_date', render: DataTable.render.datetime()},
+		{data: 'in_game_name'},
+		{data: 'in_game_date'},
+		{data: 'in_game_fleets'},
+		{data: 'in_game_planets'},
+		{data: 'in_game_ironman'},
+		{data: 'validation'},
+		],
+		rowGroup: { dataSrc: 'in_game_name' },
+		order: [[1, 'desc']],
+
+		});
+
+	}
+
+	async function discover_save_game_dir(directory_handle, save_count, save_success){
+
+		for await(const entry of directory_handle){
+			if(entry[1].kind == 'directory'){
+				console.log(`entering dir ${entry[1].name}`);
+				result = await discover_save_game_dir(entry[1], save_count, save_success);
+				save_count = result[0];
+				save_success = result[1];
+			}else{
+				file_handle = entry[1];
+				file_name = file_handle.name;
+				if(file_name.substr(-3) == 'sav'){
+					try {
+						file = await file_handle.getFile();
+						meta = await readZipMeta(file);
+						if(meta == ""){
+							throw Exception('Invalid save file');
+						}
+
+						save_success++;
+						save_meta = parse_mod_file(meta);
+						if(save_meta['ironman'] == undefined){
+							save_meta['ironman'] = 'no';
+						}
+
+						$('#checklist > #discover-saves > div > table > tbody').append($(`<tr>
+							<td>${file_name}</td>
+							<td>${file.lastModifiedDate}</td>
+							<td>${save_meta['name']}</td>
+							<td>${save_meta['date']}</td>
+							<td>${save_meta['meta_fleets']}</td>
+							<td>${save_meta['meta_planets']}</td>
+							<td>${save_meta['ironman']}</td>
+							<td class="text-end"><i class="bi bi-check-square-fill" style="color:green;"></i></td>
+							</tr>`));
+					} catch(e) {
+						$('#checklist > #discover-saves > div > table > tbody').append($(`<tr>
+							<td>${entry[1].name} - ${entry[1].kind}</td>
+							<td colspan=6></td>
+							<td class="text-end"><i class="bi bi-x-square-fill" style="color:red;"></i></td>
+							</tr>`));
+						console.log(e)
+					}
+					save_count++;
+				}
+			}
+		}
+
+		return [save_count, save_success];
 
 	}
 </script>
+        <script type="text/javascript" src="lib/zip.js/dist/zip.min.js"></script>
+        <script type="text/javascript" src="lib/zip.js/dist/z-worker.js"></script>
+	<script type="text/javascript" src="zip-local.js"></script>
+	<!--<script src="//cdn.jsdelivr.net/npm/@cronvel/minimatch@3.0.2/minimatch.min.js" integrity="sha384-mmkNRL4JbVe0XT4bBh3RNLYbCu9uXARw5CozhYqsKY1RNWSsTsG//gaMI8mdaTZw" crossorigin="anonymous" referrerpolicy="no-referrer"></script>-->
 
 <?php
 	require_once('../stellar-web/footer.php');
