@@ -1,3 +1,6 @@
 [submodule "lib/zip.js"]
 	path = lib/zip.js
 	url = https://github.com/gildas-lormeau/zip.js.git
+[submodule "lib/unrested"]
+	path = lib/unrested
+	url = https://github.com/MattMills/unrested.git

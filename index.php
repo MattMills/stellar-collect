@@ -66,7 +66,7 @@ mklink /J steam_workshop "%PROGRAMFILES(X86)%\Steam\steamapps\workshop\content\2
 		<div class="row mb-5 collapse" id="discover-mods-table">
 			<div class="col-1"></div>
 			<table class="table">
-				<thead><tr><th>Order</th><th>Mod Name</th><th>Supported Version</th><th>Steam ID</th><th>Valid</th></tr>
+				<thead><tr><th>Order</th><th>Mod Name</th><th>Supported Version</th><th>Detected</th><th>Latest</th><th>Steam ID</th><th>Valid</th></tr>
 				<tbody></tbody>
 			</table>
 			<div class="col-2"></div>
@@ -188,12 +188,14 @@ async function try_collect_data(stellaris_dir){
 }
 
 let mod_list;
+let mod_publishedfileid_to_id;
 
 async function discover_mods(){
 	let mod_count = 0;
 	let success_count = 0;
 
 	mod_list = {};
+	mod_publishedfileid_to_id = {};
 	for (const entry of dlc_load['enabled_mods'].values()){
 		//console.log(`enabled mod: ${entry}`);
 		if(entry.substring(0,4) == 'mod/'){
@@ -215,6 +217,9 @@ async function discover_mods(){
 
 				mod = mod_list[mod_count]['arr'];
 
+				mod['id'] = mod_count;
+				mod_publishedfileid_to_id[mod['remote_file_id']] = mod_count;
+
 				success_count++;
 				pattern = mod['supported_version'];
 				pattern.replaceAll('*', '[^\.]+');
@@ -226,6 +231,8 @@ async function discover_mods(){
 					<td>${mod_count}</td>
 					<td>${mod['name']}</td>
 					<td id='ver'>${mod['supported_version']}</td>
+					<td id='rev'></td>
+					<td id='max_rev'></td>
 					<td id='remote'><a href="https://steamcommunity.com/sharedfiles/filedetails/?id=${mod['remote_file_id']}" target="about:blank"><i class="bi bi-steam"></i></a></td>
 					<td><i class="bi bi-check-square-fill" style="color:green;"></i></td>
 					</tr>`
@@ -238,30 +245,68 @@ async function discover_mods(){
 				}
 
 				$('#discover-mods-table > table > tbody').append(this_row);
+				$('#discover-mods-table').removeClass('collapse');
 
+				let current_mod_dir;
+
+				try {
+					current_mod_dir = await stellaris_mod_dir.getDirectoryHandle(mod['path'].split('/').reverse()[0]);
+				} catch { };
+
+				if(current_mod_dir == undefined){
+					current_mod_dir = await steam_workshop_dir.getDirectoryHandle(mod['remote_file_id']);
+				}
+				mod['checksum_list'] = recursiveChecksumDirFiles(current_mod_dir, '');
+
+				api_file_search(mod);
 			}catch(e){
 				console.log(`dbg: parse ${mod_filename}`);
 				$(' #discover-mods-table > table > tbody').append($(`<tr id='${mod_count}'>
-					<td>${mod_count}</td><td>${mod_filename}</td><td colspan=2></td><td><i class="bi bi-x-square-fill" style="color:red;"></i></td></tr>`));
+					<td>${mod_count}</td><td>${mod_filename}</td><td colspan=4></td><td><i class="bi bi-x-square-fill" style="color:red;"></i></td></tr>`));
 					
 				console.log(e);
 				$('#discover-mods-bug-warning').removeClass('collapse');
 			}
+
 		}
 		mod_count++;
 
 	}
 	if(success_count == mod_count){
 		$('#discover-mods > #status').html(`<i class="bi bi-check-lg" style="color:green;"></i>(${mod_count})`);
-		$('#discover-mods-table ').removeClass('collapse');
 	}else if(success_count == 0){
 		$('#discover-mods > #status').html('<i class="bi bi-x-lg" style="color:red;"></i>');
 	}else{
 		$('#discover-mods > #status').html(`<i class="bi bi-check-lg" style="color:green;"></i>${success_count} <i class="bi bi-x-lg" style="color:red;"></i> ${(mod_count-success_count)}`);
-		$('#discover-mods-table').removeClass('collapse');
 	}
 		//$('#checklist > #discover-mods > div > table').DataTable();
 }
+async function api_file_search(mod){
+	await mod['checksum_list'].then(data => 
+		$.ajax({
+			type: 	"POST",
+			url: 	'/api/v1/file_search/' + mod['remote_file_id'], 
+			data:	JSON.stringify(data),
+			success: function(result){
+				row = $('div#discover-mods-table > table > tbody > tr#' + mod_publishedfileid_to_id[result['publishedfileid']]);
+				console.log(row);
+				console.log(result);
+				rev = result['matches'][0]['revision_change_number'];
+				row.find('#rev').text(rev);
+				max_rev = result['matches'][0]['max_rev'];
+				row.find('#max_rev').text(max_rev);
+
+				if(rev < max_rev){
+					row.find('#rev').addClass('table-danger');
+				}else if(rev == max_rev){
+					row.find('#rev').addClass('table-success');
+				}
+			},
+			dataType: "json"
+		})
+	);
+}
+
 
 function parse_mod_file(mod_file_text){
 	result = {}
