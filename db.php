@@ -22,10 +22,13 @@ function db_file_search($publishedfileid, $hash_list){
 
 	$result = pg_query_params($dbh, 
 		'WITH sha1_file_count as ('.
-		'	    select mod_uuid, count(mod_uuid) as sha1_count from mods_filelist  where sha1 in ('. $hash_string. ')'.
-		'		group by mod_uuid order by count(mod_uuid) desc'.
+		'	    select mod_uuid, count(mod_uuid) as sha1_count from mods_filelist '.
+	        '	where sha1 in ('. $hash_string. ')'.
+		'	group by mod_uuid order by count(mod_uuid) desc'.
 		'), total_file_count as ('.
-		'	    select mod_uuid, count(mod_uuid) as total_count from mods_filelist where mod_uuid in (select mod_uuid from sha1_file_count) group by mod_uuid order by count(mod_uuid) asc'.
+		'    select mod_uuid, count(mod_uuid)-1 as total_count from mods_filelist '.
+		'	where mod_uuid in (select mod_uuid from sha1_file_count) '.
+		'	group by mod_uuid order by count(mod_uuid) asc'.
 		'), max_revision as ('.
 		'	select publishedfileid, max(revision_change_number) as max_rev from mods where publishedfileid = $1 group by publishedfileid'.
 		') '.
@@ -35,7 +38,7 @@ function db_file_search($publishedfileid, $hash_list){
 		' join total_file_count tfc on (sfc.mod_uuid = tfc.mod_uuid)'.
 		' left join max_revision on (mods.publishedfileid = max_revision.publishedfileid)'.
 		' where mods.publishedfileid = $1' .
-		' order by  sha1_count desc, abs(total_count-sha1_count) asc, total_count desc',
+		' order by  (sha1_count/total_count*100) desc, sha1_count desc, abs(total_count-sha1_count) asc, total_count desc',
 
 
 /*

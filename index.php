@@ -130,8 +130,8 @@ async function try_collect_data(stellaris_dir){
 		for await (const entry of stellaris_dir.values()) {
 			//console.log(`stellaris dir: ${entry.name} - ${entry.kind}`);
 			if(entry.kind == 'file'){
-				handle = await stellaris_dir.getFileHandle(entry.name);
-				file = await handle.getFile();
+				var handle = await stellaris_dir.getFileHandle(entry.name);
+				var file = await handle.getFile();
 			}
 	
 			if(entry.name == 'continue_game.json'){
@@ -200,11 +200,11 @@ async function discover_mods(){
 		//console.log(`enabled mod: ${entry}`);
 		if(entry.substring(0,4) == 'mod/'){
 			try{
-				mod_filename = entry.substring(4);
+				var mod_filename = entry.substring(4);
 				//mod_filename = mod_filename.replaceAll('~', '\\~');
-				fileHandle = await stellaris_mod_dir.getFileHandle(mod_filename);
+				var fileHandle = await stellaris_mod_dir.getFileHandle(mod_filename);
 
-				file = await fileHandle.getFile();
+				var file = await fileHandle.getFile();
 				mod_list[mod_count] = {
 					mod_file: mod_filename, 
 					last_modified: file.lastModified,
@@ -256,7 +256,8 @@ async function discover_mods(){
 				if(current_mod_dir == undefined){
 					current_mod_dir = await steam_workshop_dir.getDirectoryHandle(mod['remote_file_id']);
 				}
-				mod['checksum_list'] = recursiveChecksumDirFiles(current_mod_dir, '');
+				mod['checksum_list'] = recursiveChecksumDirFiles(current_mod_dir, current_mod_dir.name);
+
 
 				api_file_search(mod);
 			}catch(e){
@@ -289,11 +290,15 @@ async function api_file_search(mod){
 			data:	JSON.stringify(data),
 			success: function(result){
 				row = $('div#discover-mods-table > table > tbody > tr#' + mod_publishedfileid_to_id[result['publishedfileid']]);
-				console.log(row);
-				console.log(result);
+
+				if(result['matches'] == false){
+					row.find('#rev').text('No Match').addClass('table-secondary');
+					return
+				}
+
 				rev = result['matches'][0]['revision_change_number'];
-				row.find('#rev').text(rev);
 				max_rev = result['matches'][0]['max_rev'];
+				row.find('#rev').text(rev);
 				row.find('#max_rev').text(max_rev);
 
 				if(rev < max_rev){
@@ -442,8 +447,8 @@ async function discover_save_game_dir(directory_handle, save_count, save_success
 
 			if(file_name.substr(-3) == 'sav'){
 				try {
-					file = await file_handle.getFile();
-					meta = await readZipMeta(file);
+					var file = await file_handle.getFile();
+					var meta = await readZipMeta(file);
 					if(meta == ""){
 						throw Exception('Invalid save file');
 					}
