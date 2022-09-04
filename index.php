@@ -9,92 +9,138 @@
 		</div>
 		<div class="row">This web app will look at your Stellaris data folder, and collect info on all your current mods, crashes and saved games.</div>
 		<div class="row my-3">&nbsp;</div>
-		<div class="row" id="select-folder">
-			<div class="col-1">Step 1.</div>
-			<div class="col"><button id="file-input-button" class="btn btn-primary">Browse to My Documents \ Paradox Interactive \ Stellaris folder</button></div>
-			<div class="col-2" id="status"></div>
-		</div>
-		<div class="row collapse" id="select-folder-error">
-			<div class="row">
-				<div class="col-1"></div>
-				<div class="col">
-					<p class="alert-danger p-3" ><b>ERROR:</b> Unable to access Stellaris game_data.json on your PC, are you sure you selected the right folder?</p>
-				</div>
-				<div class="col-2"></div>
+		<ul class="nav nav-tabs">
+			<li class="nav-item">
+				<button class="nav-link active" id="load-tab" data-bs-toggle="tab" data-bs-target="#load-tab-pane" type="button" role="tab" aria-controls="load-tab-pane" aria-selected="true">Load</button>
+			<li>
+			<li class="nav-item">
+				<button class="nav-link" id="mods-tab" data-bs-toggle="tab" data-bs-target="#mods-tab-pane" type="button" role="tab" aria-controls="mods-tab-pane" aria-selected="false">Mods</button>
+			</li>
+			<li class="nav-item">
+				<button class="nav-link" id="crashes-tab" data-bs-toggle="tab" data-bs-target="#crashes-tab-pane" type="button" role="tab" aria-controls="crashes-tab-pane" aria-selected="false">Crashes</button>
+			</li>
+			<li class="nav-item">
+				<button class="nav-link" id="saves-tab" data-bs-toggle="tab" data-bs-target="#saves-tab-pane" type="button" role="tab" aria-controls="saves-tab-pane" aria-selected="false">Save games</button>
+			</li>
+		</ul>
+		<div class="tab-content">
+			<div class="tab-pane show active" id="load-tab-pane">
+			<div class="row"><div class="col">&nbsp;</div>
 			</div>
-		</div>
-		<div class="row mt-2" id="link-steam-workshop">
-			<div class="col-1">Step 2.</div>
-			<div class="col">Checking for access to steam workshop</div>
-			<div class="col-2" id="status"></div>
-		</div>
-		<div class="row my-2 collapse" id="link-steam-workshop-error">
-			<div class="row">
-				<div class="col-1"></div>
-				<div class="col ml-3">
-					<p class="alert-danger p-3" ><b>ERROR:</b> Unable to access Stellaris Steam workshop on your PC.</p>
-				</div>
-				<div class="col-2"></div>
+			<div class="row" id="select-folder">
+				<div class="col-1">Step 1.</div>
+				<div class="col"><button id="file-input-button" class="btn btn-primary">Browse to My Documents \ Paradox Interactive \ Stellaris folder</button></div>
+				<div class="col-2" id="status"></div>
 			</div>
-			<div class="row">
-				<div class="col-1"></div>
-				<div class="col">
-					<p class=""> To enable access, open a command prompt (start->run->cmd) and enter these two commands:</p>
-					<pre class="alert alert-dark"><code>cd "%USERPROFILE%\Documents\Paradox Interactive\Stellaris\"
+			<div class="row collapse" id="select-folder-error">
+				<div class="row">
+					<div class="col-1"></div>
+					<div class="col">
+						<p class="alert-danger p-3" ><b>ERROR:</b> Unable to access Stellaris game_data.json on your PC, are you sure you selected the right folder?</p>
+					</div>
+					<div class="col-2"></div>
+				</div>
+			</div>
+			<div class="row mt-2" id="link-steam-workshop">
+				<div class="col-1">Step 2.</div>
+				<div class="col">Checking for access to steam workshop</div>
+				<div class="col-2" id="status"></div>
+			</div>
+			<div class="row my-2 collapse" id="link-steam-workshop-error">
+				<div class="row">
+					<div class="col-1"></div>
+					<div class="col ml-3">
+						<p class="alert-danger p-3" ><b>ERROR:</b> Unable to access Stellaris Steam workshop on your PC.</p>
+					</div>
+					<div class="col-2"></div>
+				</div>
+				<div class="row">
+					<div class="col-1"></div>
+					<div class="col">
+						<p class=""> To enable access, open a command prompt (start->run->cmd) and enter these two commands:</p>
+						<pre class="alert alert-dark"><code>cd "%USERPROFILE%\Documents\Paradox Interactive\Stellaris\"
 mklink /J steam_workshop "%PROGRAMFILES(X86)%\Steam\steamapps\workshop\content\281990"</code></pre>
-					<p>This will allow this page to access your Stellaris steam workshop using NTFS Junctions. <i>Note, if your Steam workshop resides at a different location than the default, you may need to tweak the path.</i></p>
-					<p>Once you've done that, click <button id="link-steam-workshop-retry" class="btn btn-primary">Retry</button></p>
+						<p>This will allow this page to access your Stellaris steam workshop using NTFS Junctions. 
+						<i>Note, if your Steam workshop resides at a different location than the default, you may need to tweak the path.</i>
+						</p>
+						<p>Once you've done that, click <button id="link-steam-workshop-retry" class="btn btn-primary">Retry</button></p>
+					</div>
+					<div class="col-2"></div>
 				</div>
+			</div>
+			<div class="row" id="discover-meta">
+		                <div class="col-1">Step 3.</div>
+		                <div class="col">Discover game metadata</div>
+		                <div class="col-2" id="status"></div>
+			</div>
+			<div class="row" id="discover-mods">
+				<div class="col-1">Step 4.</div>
+				<div class="col">Discover enabled mods</div>
+				<div class="col-2" id="status"></div>
+			</div>
+			<div class="row collapse" id="discover-mods-bug-warning">
+				<div class="col alert-warning p-3 >
+					<p><b>Known issue:</b> files with tildes (~) cannot be loaded due to <a href="https://bugs.chromium.org/p/chromium/issues/detail?id=1336156">Chrome bug/limitation</a></p>
+				</div>
+			</div>
+	                <div class="row" id="discover-crashes">
+	                        <div class="col-1">Step 5.</div>
+	                        <div class="col">Discover crashes</div>
+	                        <div class="col-2" id="status"></div>
+	                </div>
+	                <div class="row" id="discover-saves">
+	                        <div class="col-1">Step 6.</div>
+	                        <div class="col">Discover save games</div>
+	                        <div class="col-2" id="status"></div>
+	                </div>
+			<div class="row" id="generate-mod-checksums">
+				<div class="col-1">Step 7.</div>
+				<div class="col">Generate mod file SHA1 checksums</div>
+				<div class="col-2" id="status">
+					<div class="progress">
+						  <div class="progress-bar bg-success" role="progressbar" aria-label="Mod file SHA1 Checksum progress" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+					</div>
+				</div>
+			</div>
+			<div class="row" id="mod-search">
+				<div class="col-1">Step 8.</div>
+				<div class="col">Checking mod file checksums against database to find mod versions</div>
+				<div class="col-2" id="status">
+					<div class="progress">
+						<div class="progress-bar bg-success" role="progressbar" aria-label="Mod file SHA1 Checksum progress" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="tab-pane" id="mods-tab-pane" role="tabpanel">
+			<div class="row mb-5 collapse" id="discover-mods-table">
+				<div class="col-1"></div>
+				<table class="table">
+					<thead><tr><th>Order</th><th>Mod Name</th><th>Supported Version</th><th>Detected</th><th>Latest</th><th>Steam ID</th><th>Valid</th></tr>
+					<tbody></tbody>
+				</table>
 				<div class="col-2"></div>
 			</div>
 		</div>
-		<div class="row" id="discover-meta">
-	                <div class="col-1">Step 3.</div>
-	                <div class="col">Discover game metadata</div>
-	                <div class="col-2" id="status"></div>
-		</div>
-		<div class="row" id="discover-mods">
-			<div class="col-1">Step 4.</div>
-			<div class="col">Discover enabled mods</div>
-			<div class="col-2" id="status"></div>
-		</div>
-		<div class="row collapse" id="discover-mods-bug-warning">
-			<div class="col alert-warning p-3 >
-				<p><b>Known issue:</b> files with tildes (~) cannot be loaded due to <a href="https://bugs.chromium.org/p/chromium/issues/detail?id=1336156">Chrome bug/limitation</a></p>
+		<div class="tab-pane" id="crashes-tab-pane" role="tabpanel">
+			<div class="row mb-5 collapse" id="discover-crashes-table">
+				<div class="col-1"></div>
+					<table class="table">
+						<thead><tr><th>Folder</th><th>Last Modified Date</th><th>Valid</th></tr></thead>
+				 		<tbody></tbody>
+	        	                </table>
+				<div class="col-2"></div>
 			</div>
 		</div>
-		<div class="row mb-5 collapse" id="discover-mods-table">
-			<div class="col-1"></div>
-			<table class="table">
-				<thead><tr><th>Order</th><th>Mod Name</th><th>Supported Version</th><th>Detected</th><th>Latest</th><th>Steam ID</th><th>Valid</th></tr>
-				<tbody></tbody>
-			</table>
-			<div class="col-2"></div>
-		</div>
-		<div class="row" id="discover-crashes">
-                        <div class="col-1">Step 5.</div>
-                        <div class="col">Discover crashes</div>
-                        <div class="col-2" id="status"></div>
-		</div>
-		<div class="row mb-5 collapse" id="discover-crashes-table">
-			<div class="col-1"></div>
-				<table class="table">
-					<thead><tr><th>Folder</th><th>Last Modified Date</th><th>Valid</th></tr></thead>
-			 		<tbody></tbody>
-        	                </table>
-			<div class="col-2"></div>
-		</div>
-		<div class="row" id="discover-saves">
-                        <div class="col-1">Step 6.</div>
-                        <div class="col">Discover save games</div>
-                        <div class="col-2" id="status"></div>
-                </div>
-                <div class="row mb-5 collapse" id="discover-saves-table">
+		<div class="tab-pane" id="saves-tab-pane" role="tabpanel">
+	                <div class="row mb-5 collapse" id="discover-saves-table">
 			<table class="table">
 				<thead><tr><th>File</th><th>Last Modified</th><th>Name</th><th>In game Date</th><th>Fleets</th><th>Planets</th><th>Ironman</th><th>Valid</th></tr></thead>
                                 <tbody></tbody>
                         </table>
-                </div>
+	                </div>
+		</div>
+		</div>
 
 	</div>
 	<script>
@@ -189,10 +235,12 @@ async function try_collect_data(stellaris_dir){
 
 let mod_list;
 let mod_publishedfileid_to_id;
+let mod_count;
+let success_count;
 
 async function discover_mods(){
-	let mod_count = 0;
-	let success_count = 0;
+	mod_count = 0;
+	success_count = 0;
 
 	mod_list = {};
 	mod_publishedfileid_to_id = {};
@@ -259,7 +307,9 @@ async function discover_mods(){
 				mod['checksum_list'] = recursiveChecksumDirFiles(current_mod_dir, current_mod_dir.name);
 
 
+
 				api_file_search(mod);
+
 			}catch(e){
 				console.log(`dbg: parse ${mod_filename}`);
 				$(' #discover-mods-table > table > tbody').append($(`<tr id='${mod_count}'>
@@ -282,7 +332,12 @@ async function discover_mods(){
 	}
 		//$('#checklist > #discover-mods > div > table').DataTable();
 }
+
+
+let mod_search_success = 0;
+let mod_search_fail = 0;
 async function api_file_search(mod){
+	//TODO: Remove anything but SHA1 and publishedfileid from submission and API
 	await mod['checksum_list'].then(data => 
 		$.ajax({
 			type: 	"POST",
@@ -293,6 +348,8 @@ async function api_file_search(mod){
 
 				if(result['matches'] == false){
 					row.find('#rev').text('No Match').addClass('table-secondary');
+					mod_search_success++; //Not really a success but a "successful" result
+					$('#mod-search > #status > .progress > .progress-bar').width((mod_search_success/success_count*100) + '%' ).text(mod_search_success + ' / ' + success_count);
 					return
 				}
 
@@ -306,6 +363,9 @@ async function api_file_search(mod){
 				}else if(rev == max_rev){
 					row.find('#rev').addClass('table-success');
 				}
+
+				mod_search_success++;
+		                $('#mod-search > #status > .progress > .progress-bar').width((mod_search_success/success_count*100) + '%' ).text(mod_search_success + ' / ' + success_count);
 			},
 			dataType: "json"
 		})
@@ -484,6 +544,9 @@ async function discover_save_game_dir(directory_handle, save_count, save_success
 	return [save_count, save_success];
 }
 
+
+let mod_checksum_count = 0;
+
 //From https://stackoverflow.com/questions/64283711/how-to-recursively-read-local-files-and-directories-in-web-browser-using-file-sy
 async function recursiveChecksumDirFiles(dirHandle, path) {
 	const files = [];
@@ -494,12 +557,33 @@ async function recursiveChecksumDirFiles(dirHandle, path) {
 			files.push(...await recursiveChecksumDirFiles(handle, path + '/' + name));
 		} else {
 			const fullname = path + '/' + name;
-			file = await handle.getFile()
-			const sha1 = await getSHA1FromUint8Array(await file.arrayBuffer());
-			const {lastModified} = file;
-			const {size} = file;
+			let sha1, lastModified, size;
+			try {
+				var file = await handle.getFile()
+				sha1 = await getSHA1FromUint8Array(await file.arrayBuffer());
+				lastModified = file.lastModified;
+				size = file.size;
+			} catch(e) {
+				console.log(fullname + ' - Exception - ' + e);
+			}
+
+			if(sha1 == undefined){
+				sha1 = null;
+			}
+			if(lastModified == undefined){
+				lastModified = null;
+			}
+			if(size == undefined){
+				size = null;
+			}
+
 		        files.push({fullname, lastModified, size, sha1});
 		}
+	}
+	if(!path.includes('/')){
+		mod_checksum_count++;
+		$('#generate-mod-checksums > #status > .progress > .progress-bar').width((mod_checksum_count/success_count*100) + '%' ).text(mod_checksum_count + ' / ' + success_count);
+
 	}
 
 	return files;
