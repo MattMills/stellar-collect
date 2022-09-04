@@ -9,6 +9,14 @@
 		</div>
 		<div class="row">This web app will look at your Stellaris data folder, and collect info on all your current mods, crashes and saved games.</div>
 		<div class="row my-3">&nbsp;</div>
+		<div class="row" id="native-file-api-err">
+			<div class="col">
+				<div class="alert alert-danger collapse">
+					<h3>ERROR!</h3> Your browser doesn't support the native filesystem API so this app won't work. As of writing Edge, Chrome and Opera support it.
+					<a href="https://caniuse.com/native-filesystem-api">Click here for up to date compatibility info</a>
+				</div>
+			</div>
+		</div>
 		<ul class="nav nav-tabs">
 			<li class="nav-item">
 				<button class="nav-link active" id="load-tab" data-bs-toggle="tab" data-bs-target="#load-tab-pane" type="button" role="tab" aria-controls="load-tab-pane" aria-selected="true">Load</button>
@@ -21,6 +29,10 @@
 			</li>
 			<li class="nav-item">
 				<button class="nav-link" id="saves-tab" data-bs-toggle="tab" data-bs-target="#saves-tab-pane" type="button" role="tab" aria-controls="saves-tab-pane" aria-selected="false">Save games</button>
+			</li>
+			<li class="nav-item ms-auto">
+				<button class="nav-link" id="save-as-tab" data-bs-toggle="tab" data-bs-target="#save-as-tab-pane" type="button" role="tab" aria-controls="save-as-tab-pane" aria-selected="false"><i class="bi bi-link-45deg"></i>
+ Save as Link</button>
 			</li>
 		</ul>
 		<div class="tab-content">
@@ -140,6 +152,10 @@ mklink /J steam_workshop "%PROGRAMFILES(X86)%\Steam\steamapps\workshop\content\2
                         </table>
 	                </div>
 		</div>
+		<div class="tab-pane" id="save-as-tab-pane" role="tabpanel">
+			<div class="row">
+				This button no workie workie yet.
+			</div>
 		</div>
 
 	</div>
@@ -158,7 +174,11 @@ let game_data;
 let mods_registry;
 
 document.getElementById('file-input-button').addEventListener('click', async () => {
+	if(!('showDirectoryPicker' in window)){
+		alert("Your browser doesn't support the native filesystem API :( Use chrome or edge");
+	}
 	try {
+
 		stellaris_dir = await window.showDirectoryPicker({id: 'stellaris', startIn: 'desktop'});
 	} catch(e) {
 		console.log(e);
@@ -623,3 +643,10 @@ async function generate_checksums(directory_handle){
 <?php
 	require_once('../stellar-web/footer.php');
 ?>
+	<script>
+	$(document).ready( function() {
+		        if(!('showDirectoryPicker' in window)){
+				                $('#native-file-api-err > .col > .alert').removeClass('collapse');
+						        }
+	});
+	</script>
